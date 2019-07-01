@@ -1,0 +1,6 @@
+xrdb -load $HOME/.Xresources
+xsetroot -solid gray &
+oclock -geometry 75x75-0-0 &
+xload -geometry -80-0 &
+xterm -geometry +0-100 &
+exec twm
