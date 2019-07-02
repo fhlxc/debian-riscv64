@@ -226,10 +226,11 @@ development: base-chroot
 #Install the X-windows environment
 packages: base-chroot
 	sudo chroot work/debian-riscv64-chroot apt install -y \
-            adduser dialog apt-utils ifupdown iputils-ping less locales net-tools \
+            adduser busybox \
+            dialog apt-utils ifupdown iputils-ping less locales net-tools nfs-common \
             openssh-client openssh-server openssh-sftp-server procps \
             twm vim xinit xserver-common x11-apps x11-xserver-utils \
-            xfonts-100dpi xfonts-75dpi xfonts-scalable xfonts-terminus xfonts-terminus-oblique \
+            xfonts-100dpi xfonts-75dpi xfonts-base xfonts-scalable xfonts-terminus xfonts-terminus-oblique \
             xserver-xorg xserver-xorg-core xserver-xorg-input-kbd xserver-xorg-input-mouse \
             xserver-xorg-legacy xserver-xorg-video-fbdev xterm
             
