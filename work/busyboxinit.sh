@@ -1,24 +1,15 @@
 #!/bin/busybox ash
 /bin/busybox --install -s
-mkdir /dos
-sleep 5
+touch /etc/mtab
+fsck.ext4 -p -f -v /dev/rda2
 echo Mounting SD root
-mount -t ext4 /dev/mmcblk0p2 /mnt || (echo mount -t ext4 /dev/mmcblk0p2 /mnt failed, dropping to ash; /bin/ash)
-echo Mounting proc
+mount -t ext4 /dev/rda2 /mnt || (echo mount -t ext4 /dev/rda2 /mnt failed, dropping to ash; /bin/ash)
 mkdir -p /mnt/proc
 mount -t proc none /mnt/proc
-echo Mounting sysfs
 mkdir -p /mnt/sys
 mount -t sysfs none /mnt/sys
-echo Mounting devtmpfs
 mkdir -p /mnt/dev
 mount -t devtmpfs udev /mnt/dev
-mkdir -p /mnt/dev/pts
-echo Mounting devpts
-mount -t devpts devpts /mnt/dev/pts
-echo Mounting tmpfs
-mkdir -p /mnt/tmp
-mount -t tmpfs tmpfs /mnt/tmp
 mkdir -p /mnt/run
 mount -t tmpfs tmpfs /mnt/run
 echo Executing switch_root for mmc

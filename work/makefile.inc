@@ -274,6 +274,7 @@ init: base-chroot work/busyboxinit.sh
 	cp -p work/usr-share-udhcpc-default.script usr/share/udhcpc/default.script
 	cp -p ${CHROOT_PATH}/sbin/mount.nfs ./sbin
 	cp -p ${CHROOT_PATH}/sbin/switch_root ./sbin
+	cp -p ${CHROOT_PATH}/sbin/fsck.ext4 ./sbin
 	cp -p ${CHROOT_PATH}/bin/busybox ./bin
 	cp -p ${CHROOT_PATH}/lib/ld-linux-riscv64-lp64d.so.1 ./lib
 	cp -p ${CHROOT_PATH}/lib/riscv64-linux-gnu/libblkid.so.1 ./lib/riscv64-linux-gnu
@@ -294,11 +295,14 @@ init: base-chroot work/busyboxinit.sh
 	cp -p ${CHROOT_PATH}/lib/riscv64-linux-gnu/libselinux.so.1 ./lib/riscv64-linux-gnu
 	cp -p ${CHROOT_PATH}/lib/riscv64-linux-gnu/libtirpc.so.3 ./lib/riscv64-linux-gnu
 	cp -p ${CHROOT_PATH}/lib/riscv64-linux-gnu/libuuid.so.1 ./lib/riscv64-linux-gnu
+	cp -p ${CHROOT_PATH}/lib/riscv64-linux-gnu/libext2fs.so.2 ./lib/riscv64-linux-gnu
+	cp -p ${CHROOT_PATH}/lib/riscv64-linux-gnu/libe2p.so.2 ./lib/riscv64-linux-gnu
+
 	cp work/busyboxinit.sh init
 	chmod +x init
 
 ../linux-5.1.3-lowrisc/initramfs.cpio: init
-	echo "mknod dev/null c 1 3; mknod dev/tty c 5 0; mknod dev/zero c 1 5; mknod dev/console c 5 1; mknod dev/random c 1 8; mknod dev/urandom c 1 9; mknod dev/mmcblk0 b 179 0; mknod dev/mmcblk0p1 b 179 1; mknod dev/mmcblk0p2 b 179 2; mknod dev/gpio0 c 200 0; find . -path ./work -prune -o -path ./.git -prune -o -print | cpio -H newc -o > $@" | fakeroot
+	echo "mknod dev/null c 1 3; mknod dev/tty c 5 0; mknod dev/zero c 1 5; mknod dev/console c 5 1; mknod dev/random c 1 8; mknod dev/urandom c 1 9; mknod dev/mmcblk0 b 254 0; mknod dev/rda1 b 254 1; mknod dev/rda2 b 254 2; mknod dev/gpio0 c 200 0; find . -path ./work -prune -o -path ./.git -prune -o -print | cpio -H newc -o > $@" | fakeroot
 
 deps:
 	@find . -path ./work -prune -o -path ./.git -prune -o -print|xargs file|grep RISC-V|cut -d: -f1|xargs riscv64-unknown-elf-readelf -d |grep NEEDED|cut -d: -f2|sort -u
