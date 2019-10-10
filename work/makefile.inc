@@ -40,6 +40,7 @@ work/debian-riscv64-chroot/usr/bin/apt:
 
 #Install the development environment
 development: base-chroot
+	sudo chroot work/debian-riscv64-chroot apt update
 	sudo chroot work/debian-riscv64-chroot apt install -y \
             adduser adwaita-icon-theme aglfn apt \
             apt-utils arch-test at-spi2-core base-files \
@@ -225,6 +226,7 @@ development: base-chroot
 
 #Install the X-windows environment
 packages: base-chroot
+	sudo chroot work/debian-riscv64-chroot apt update
 	sudo chroot work/debian-riscv64-chroot apt install -y \
             adduser busybox \
             dialog apt-utils ifupdown iputils-ping less locales net-tools nfs-common \
@@ -235,9 +237,10 @@ packages: base-chroot
             xserver-xorg xserver-xorg-core xserver-xorg-input-kbd xserver-xorg-input-mouse \
             xserver-xorg-legacy xserver-xorg-video-fbdev xterm
             
-image:../rootfs.tar.xz
+image:../lowrisc-quickstart/rootfs.tar.xz
 
-../rootfs.tar.xz: base-chroot packages
+../lowrisc-quickstart/rootfs.tar.xz: base-chroot packages work/interfaces work/hostname \
+            work/fstab.riscv work/delay_timer work/xinitrc work/00-fbdev.conf work/xresources 
 #Enable the Ethernet interface
 	sudo cp work/interfaces work/debian-riscv64-chroot/etc/network/interfaces
 #Update the hostname

@@ -9,7 +9,7 @@
 #LABEL=SWAP	swap		swap	defaults	0 0
 #
 # DOS partition containing kernel+BBL+cpio
-/dev/mmcblk0p1 /mnt/dos msdos defaults 0 1
-/dev/mmcblk0p2 / ext4 defaults 0 1
-/dev/mmcblk0p3 swap swap defaults 0 0
-/dev/mmcblk0p4 /home ext4 defaults 0 1
+/dev/rda1 /mnt/dos msdos defaults 0 1
+/dev/rda2 / ext4 defaults 0 1
+/dev/rda3 swap swap defaults 0 0
+/dev/rda4 /home ext4 defaults 0 1
