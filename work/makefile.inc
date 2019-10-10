@@ -26,7 +26,7 @@ base-chroot: /usr/sbin/debootstrap /usr/share/keyrings/debian-ports-archive-keyr
 #Perform the first stage bootstrap
 work/debian-riscv64-chroot/usr/bin/apt:
 	sudo debootstrap --arch=riscv64 --variant=minbase --keyring=/etc/apt/trusted.gpg \
-	      --include=gnupg --exclude=cgmanager sid work/debian-riscv64-chroot \
+	      --include=gnupg,nfs-common,e2fsprogs,busybox --exclude=cgmanager sid work/debian-riscv64-chroot \
 	      http://deb.debian.org/debian-ports || exit 1
 #Update sources.list
 	sudo cp work/sources.list work/debian-riscv64-chroot/etc/apt
@@ -230,7 +230,8 @@ packages: base-chroot
             dialog apt-utils ifupdown iputils-ping less locales net-tools nfs-common \
             openssh-client openssh-server openssh-sftp-server procps \
             twm vim xinit xserver-common x11-apps x11-xserver-utils \
-            xfonts-100dpi xfonts-75dpi xfonts-base xfonts-scalable xfonts-terminus xfonts-terminus-oblique \
+            xfonts-100dpi xfonts-75dpi xfonts-100dpi-transcoded xfonts-75dpi-transcoded \
+            xfonts-base xfonts-scalable xfonts-terminus xfonts-terminus-oblique \
             xserver-xorg xserver-xorg-core xserver-xorg-input-kbd xserver-xorg-input-mouse \
             xserver-xorg-legacy xserver-xorg-video-fbdev xterm
             
