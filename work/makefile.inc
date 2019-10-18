@@ -6,11 +6,11 @@ clean-chroot:
 	#First get rid of the previous chroot
 	sudo rm -rf work/debian-riscv64-chroot
 
-work/debian-riscv64-chroot/usr/bin/qemu-riscv64-static: ../qemu/riscv64-linux-user/qemu-riscv64
+work/debian-riscv64-chroot/usr/bin/qemu-riscv64-static: ../qemu/build-user/riscv64-linux-user/qemu-riscv64
 	#Make a directory to hold the riscv emulator
 	sudo mkdir -p work/debian-riscv64-chroot/usr/bin
 	#Copy the emulator
-	sudo cp ../qemu/riscv64-linux-user/qemu-riscv64 $@
+	sudo cp ../qemu/build-user/riscv64-linux-user/qemu-riscv64 $@
 
 
 base-chroot: /usr/sbin/debootstrap /usr/share/keyrings/debian-ports-archive-keyring.gpg work/debian-riscv64-chroot/usr/bin/qemu-riscv64-static work/debian-riscv64-chroot/usr/bin/apt
@@ -26,7 +26,7 @@ base-chroot: /usr/sbin/debootstrap /usr/share/keyrings/debian-ports-archive-keyr
 #Perform the first stage bootstrap
 work/debian-riscv64-chroot/usr/bin/apt:
 	sudo debootstrap --arch=riscv64 --variant=minbase --keyring=/etc/apt/trusted.gpg \
-	      --include=gnupg,nfs-common,e2fsprogs,busybox --exclude=cgmanager sid work/debian-riscv64-chroot \
+	      --include=gnupg,nfs-common,e2fsprogs,busybox.nbd-client,libpcre2-8-0,dosfstools --exclude=cgmanager sid work/debian-riscv64-chroot \
 	      http://deb.debian.org/debian-ports || exit 1
 #Update sources.list
 	sudo cp work/sources.list work/debian-riscv64-chroot/etc/apt
@@ -34,9 +34,13 @@ work/debian-riscv64-chroot/usr/bin/apt:
 	sudo chroot work/debian-riscv64-chroot apt-key adv --recv-keys --keyserver keyserver.ubuntu.com DA1B2CEA81DCBC61
 	sudo chroot work/debian-riscv64-chroot apt update
 
-../qemu/riscv64-linux-user/qemu-riscv64:
-	(cd ../qemu; ./configure --static --disable-system --target-list=riscv64-linux-user)
-	make -C ../qemu -j 4
+../qemu/build-user/riscv64-linux-user/qemu-riscv64:
+	(mkdir -p ../qemu/build-user; cd ../qemu/build-user; ../configure --static --disable-system --target-list=riscv64-linux-user)
+	make -C ../qemu/build-user -j 4
+
+../qemu/build-system/riscv64-softmmu/qemu-system-riscv64:
+	(mkdir -p ../qemu/build-system; cd ../qemu/build-system; ../configure --target-list=riscv64-softmmu)
+	make -C ../qemu/build-system -j 4
 
 #Install the development environment
 development: base-chroot
@@ -279,6 +283,11 @@ init: base-chroot work/busyboxinit.sh
 	cp -p ${CHROOT_PATH}/sbin/mount.nfs ./sbin
 	cp -p ${CHROOT_PATH}/sbin/switch_root ./sbin
 	cp -p ${CHROOT_PATH}/sbin/fsck.ext4 ./sbin
+	cp -p ${CHROOT_PATH}/sbin/mkfs.ext4 ./sbin
+	cp -p ${CHROOT_PATH}/sbin/mkfs.fat ./sbin
+	cp -p ${CHROOT_PATH}/sbin/nbd-client ./sbin
+	cp -p ${CHROOT_PATH}/sbin/aoe-discover ./sbin
+	cp -p ${CHROOT_PATH}/sbin/aoe-stat ./sbin
 	cp -p ${CHROOT_PATH}/bin/busybox ./bin
 	cp -p ${CHROOT_PATH}/lib/ld-linux-riscv64-lp64d.so.1 ./lib
 	cp -p ${CHROOT_PATH}/lib/riscv64-linux-gnu/libblkid.so.1 ./lib/riscv64-linux-gnu
@@ -293,20 +302,36 @@ init: base-chroot work/busyboxinit.sh
 	cp -p ${CHROOT_PATH}/lib/riscv64-linux-gnu/libmount.so.1 ./lib/riscv64-linux-gnu
 	cp -p ${CHROOT_PATH}/lib/riscv64-linux-gnu/libnsl.so.1 ./lib/riscv64-linux-gnu
 	cp -p ${CHROOT_PATH}/lib/riscv64-linux-gnu/libpcre.so.3 ./lib/riscv64-linux-gnu
+	cp -p ${CHROOT_PATH}/usr/lib/riscv64-linux-gnu/libpcre2-8.so.0 ./usr/lib/riscv64-linux-gnu
 	cp -p ${CHROOT_PATH}/lib/riscv64-linux-gnu/libpthread.so.0 ./lib/riscv64-linux-gnu
 	cp -p ${CHROOT_PATH}/lib/riscv64-linux-gnu/libresolv.so.2 ./lib/riscv64-linux-gnu
 	cp -p ${CHROOT_PATH}/lib/riscv64-linux-gnu/librt.so.1 ./lib/riscv64-linux-gnu
 	cp -p ${CHROOT_PATH}/lib/riscv64-linux-gnu/libselinux.so.1 ./lib/riscv64-linux-gnu
 	cp -p ${CHROOT_PATH}/lib/riscv64-linux-gnu/libtirpc.so.3 ./lib/riscv64-linux-gnu
 	cp -p ${CHROOT_PATH}/lib/riscv64-linux-gnu/libuuid.so.1 ./lib/riscv64-linux-gnu
+	cp -p ${CHROOT_PATH}/lib/riscv64-linux-gnu/libudev.so.1 ./lib/riscv64-linux-gnu
 	cp -p ${CHROOT_PATH}/lib/riscv64-linux-gnu/libext2fs.so.2 ./lib/riscv64-linux-gnu
 	cp -p ${CHROOT_PATH}/lib/riscv64-linux-gnu/libe2p.so.2 ./lib/riscv64-linux-gnu
+	cp -p ${CHROOT_PATH}/usr/lib/riscv64-linux-gnu/libgnutls.so.30 ./lib/riscv64-linux-gnu
+	cp -p ${CHROOT_PATH}/lib/riscv64-linux-gnu/libnl-genl-3.so.200  ./lib/riscv64-linux-gnu
+	cp -p ${CHROOT_PATH}/lib/riscv64-linux-gnu/libnl-3.so.200  ./lib/riscv64-linux-gnu
+	cp -p ${CHROOT_PATH}/lib/riscv64-linux-gnu/libc.so.6  ./lib/riscv64-linux-gnu
+	cp -p ${CHROOT_PATH}/usr/lib/riscv64-linux-gnu/libp11-kit.so.0  ./usr/lib/riscv64-linux-gnu
+	cp -p ${CHROOT_PATH}/usr/lib/riscv64-linux-gnu/libidn2.so.0  ./usr/lib/riscv64-linux-gnu
+	cp -p ${CHROOT_PATH}/usr/lib/riscv64-linux-gnu/libunistring.so.2  ./usr/lib/riscv64-linux-gnu
+	cp -p ${CHROOT_PATH}/usr/lib/riscv64-linux-gnu/libtasn1.so.6  ./usr/lib/riscv64-linux-gnu
+	cp -p ${CHROOT_PATH}/usr/lib/riscv64-linux-gnu/libnettle.so.6  ./usr/lib/riscv64-linux-gnu
+	cp -p ${CHROOT_PATH}/usr/lib/riscv64-linux-gnu/libhogweed.so.4  ./usr/lib/riscv64-linux-gnu
+	cp -p ${CHROOT_PATH}/usr/lib/riscv64-linux-gnu/libgmp.so.10  ./usr/lib/riscv64-linux-gnu
+	cp -p ${CHROOT_PATH}/lib/riscv64-linux-gnu/libpthread.so.0  ./lib/riscv64-linux-gnu
+	cp -p ${CHROOT_PATH}/usr/lib/riscv64-linux-gnu/libffi.so.6  ./usr/lib/riscv64-linux-gnu
+	cp -p ${CHROOT_PATH}/lib/riscv64-linux-gnu/libdl.so.2  ./lib/riscv64-linux-gnu
 
 	cp work/busyboxinit.sh init
 	chmod +x init
 
 ../linux-5.1.3-lowrisc/initramfs.cpio: init
-	echo "mknod dev/null c 1 3; mknod dev/tty c 5 0; mknod dev/zero c 1 5; mknod dev/console c 5 1; mknod dev/random c 1 8; mknod dev/urandom c 1 9; mknod dev/mmcblk0 b 254 0; mknod dev/rda1 b 254 1; mknod dev/rda2 b 254 2; mknod dev/gpio0 c 200 0; find . -path ./work -prune -o -path ./.git -prune -o -print | cpio -H newc -o > $@" | fakeroot
+	echo "mknod dev/null c 1 3; mknod dev/tty c 5 0; mknod dev/zero c 1 5; mknod dev/console c 5 1; mknod dev/random c 1 8; mknod dev/urandom c 1 9; mknod dev/gpio0 c 200 0; find . -path ./work -prune -o -path ./.git -prune -o -print | cpio -H newc -o > $@" | fakeroot
 
 deps:
 	@find . -path ./work -prune -o -path ./.git -prune -o -print|xargs file|grep RISC-V|cut -d: -f1|xargs riscv64-unknown-elf-readelf -d |grep NEEDED|cut -d: -f2|sort -u
