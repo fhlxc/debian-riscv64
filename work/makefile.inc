@@ -26,7 +26,7 @@ base-chroot: /usr/sbin/debootstrap /usr/share/keyrings/debian-ports-archive-keyr
 #Perform the first stage bootstrap
 work/debian-riscv64-chroot/usr/bin/apt:
 	sudo debootstrap --arch=riscv64 --variant=minbase --keyring=/etc/apt/trusted.gpg \
-	      --include=gnupg,nfs-common,e2fsprogs,busybox,nbd-client,libpcre2-8-0,dosfstools --exclude=cgmanager sid work/debian-riscv64-chroot \
+	      --include=gnupg,nfs-common,e2fsprogs,busybox,nbd-client,libpcre2-8-0,dosfstools,aoetools --exclude=cgmanager sid work/debian-riscv64-chroot \
 	      http://deb.debian.org/debian-ports || exit 1
 #Update sources.list
 	sudo cp work/sources.list work/debian-riscv64-chroot/etc/apt
