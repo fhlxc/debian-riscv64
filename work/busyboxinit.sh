@@ -23,9 +23,15 @@ mount -t tmpfs - /run
 #echo Executing switch_root for nbd
 #exec switch_root /mnt /sbin/init
 
-fsck.ext4 -p -f -v /dev/rda2 || (echo fsck.ext4 /dev/rda2 failed, dropping to ash; /bin/ash)
+echo "File system check (root partition)"
+fsck.ext4 -p -f -v /dev/rda2
+if [ "$?" -gt 1 ]
+then
+    echo fsck.ext4 /dev/rda2 returned "$?", dropping to ash
+    /bin/ash
+fi
 echo Mounting SD root
 mount -t ext4 /dev/rda2 /mnt || (echo mount -t ext4 /dev/rda2 /mnt failed, dropping to ash; /bin/ash)
 mkdir -p /mnt/proc /mnt/sys /mnt/dev /mnt/run
-echo Executing switch_root for mmc
+echo Executing switch_root for SD-Card
 exec switch_root /mnt /sbin/init
