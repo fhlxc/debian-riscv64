@@ -12,13 +12,14 @@ RESOLV_CONF="/etc/resolv.conf"
 [ -n "$broadcast" ] && BROADCAST="broadcast $broadcast"
 [ -n "$subnet" ] && NETMASK="netmask $subnet"
 
+echo $1
 case "$1" in
         deconfig)
-                ifconfig $interface 0.0.0.0
+                ifconfig $interface 0.0.0.0 up
                 ;;
 
         renew|bound)
-                ifconfig $interface $ip $BROADCAST $NETMASK
+                ifconfig $interface $ip $BROADCAST $NETMASK up
 
                 if [ -n "$router" ] ; then
                         echo "deleting routers"
