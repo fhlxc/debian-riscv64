@@ -232,7 +232,7 @@ development: base-chroot
 packages: base-chroot
 	sudo chroot work/debian-riscv64-chroot apt update
 	sudo chroot work/debian-riscv64-chroot apt install -y \
-            adduser busybox \
+            adduser busybox dosfstools nbd-client aoetools \
             dialog apt-utils ifupdown iputils-ping less locales net-tools nfs-common \
             openssh-client openssh-server openssh-sftp-server procps \
             twm vim xinit xserver-common x11-apps x11-xserver-utils \
@@ -244,37 +244,93 @@ packages: base-chroot
 image:../lowrisc-quickstart/rootfs.tar.xz
 
 ../lowrisc-quickstart/rootfs.tar.xz: base-chroot packages work/interfaces work/hostname \
-            work/fstab.riscv work/delay_timer work/xinitrc work/00-fbdev.conf work/xresources 
+            work/fstab.riscv work/delay_timer work/xinitrc work/00-fbdev.conf work/passwords.riscv 
 #Enable the Ethernet interface
 	sudo cp work/interfaces work/debian-riscv64-chroot/etc/network/interfaces
 #Update the hostname
 	sudo cp work/hostname work/debian-riscv64-chroot/etc
-#Delete the root password (user will set it later)
-	sudo chroot work/debian-riscv64-chroot passwd -d root
 #Setup locales
 	sudo chroot work/debian-riscv64-chroot dpkg-reconfigure locales
 #Setup timezone
 	sudo chroot work/debian-riscv64-chroot dpkg-reconfigure tzdata
 #Remove the dummy start-stop-daemon
 #sudo chroot work/debian-riscv64-chroot mv /sbin/start-stop-daemon{.REAL,}
-#Disable cgmanager
-#sudo chroot work/debian-riscv64-chroot systemctl disable cgmanager.service
+#Disable apt daily tasks
+	sudo chroot work/debian-riscv64-chroot systemctl disable man-db.service
+	sudo chroot work/debian-riscv64-chroot systemctl disable apt-daily.service
+	sudo chroot work/debian-riscv64-chroot systemctl disable apt-daily-upgrade.service
 	sudo chroot work/debian-riscv64-chroot apt clean
 #make some X defaults
-	sudo cp work/xinitrc work/debian-riscv64-chroot/root/.xinitrc
+	sudo cp work/xinitrc work/debian-riscv64-chroot/etc/X11/xinit/xinitrc
 	sudo cp work/00-fbdev.conf work/debian-riscv64-chroot/usr/share/X11/xorg.conf.d
-	sudo cp work/xresources work/debian-riscv64-chroot/root/.Xresources
-        
-#Delay scheduled work
-	sudo cp work/delay_timer work/debian-riscv64-chroot/etc/systemd/system/man-db.timer
-	sudo cp work/delay_timer work/debian-riscv64-chroot/etc/systemd/system/apt-daily.timer
-	sudo cp work/delay_timer work/debian-riscv64-chroot/etc/systemd/system/apt-daily-upgrade.timer
 #Create fstab        
 	sudo mkdir -p work/debian-riscv64-chroot/mnt/dos
 	sudo cp work/fstab.riscv work/debian-riscv64-chroot/etc/fstab
+#Delete the root password (user will set it later)
+	-sudo chroot work/debian-riscv64-chroot deluser lowrisc
+	sudo chroot work/debian-riscv64-chroot adduser --disabled-password --gecos lowrisc --home /usr/local/lowrisc lowrisc
+	sudo chroot work/debian-riscv64-chroot usermod -a -G sudo lowrisc
+	cat work/passwords.riscv | sudo chroot work/debian-riscv64-chroot chpasswd
         
 #Archive the current rootfs
 	sudo tar cJf - -C ${CHROOT_PATH} . > $@
+
+init: base-chroot work/busyboxinit.sh 
+	rm -rf bin etc dev home lib proc sbin sys tmp usr mnt nfs root run init
+	mkdir -p bin etc dev home lib proc sbin sys tmp usr mnt nfs root run usr/bin usr/lib usr/sbin usr/share/perl5 etc/udhcpc lib/riscv64-linux-gnu usr/lib/riscv64-linux-gnu # usr/share/sysvinit
+	cp -p work/usr-share-udhcpc-default.script etc/udhcpc/default.script
+	cp -p ${CHROOT_PATH}/sbin/mount.nfs ./sbin
+	cp -p ${CHROOT_PATH}/sbin/switch_root ./sbin
+	cp -p ${CHROOT_PATH}/sbin/fsck.ext4 ./sbin
+	cp -p ${CHROOT_PATH}/sbin/mkfs.ext4 ./sbin
+	cp -p ${CHROOT_PATH}/sbin/mkfs.fat ./sbin
+	cp -p ${CHROOT_PATH}/sbin/nbd-client ./sbin
+	cp -p ${CHROOT_PATH}/sbin/aoe-discover ./sbin
+	cp -p ${CHROOT_PATH}/sbin/aoe-stat ./sbin
+	cp -p ${CHROOT_PATH}/bin/busybox ./bin
+	cp -p ${CHROOT_PATH}/lib/ld-linux-riscv64-lp64d.so.1 ./lib
+	cp -p ${CHROOT_PATH}/lib/riscv64-linux-gnu/libblkid.so.1 ./lib/riscv64-linux-gnu
+	cp -p ${CHROOT_PATH}/lib/riscv64-linux-gnu/libcom_err.so.2 ./lib/riscv64-linux-gnu
+	cp -p ${CHROOT_PATH}/lib/riscv64-linux-gnu/libc.so.6 ./lib/riscv64-linux-gnu
+	cp -p ${CHROOT_PATH}/lib/riscv64-linux-gnu/libdl.so.2 ./lib/riscv64-linux-gnu
+	cp -p ${CHROOT_PATH}/usr/lib/riscv64-linux-gnu/libgssapi_krb5.so.2 ./usr/lib/riscv64-linux-gnu
+	cp -p ${CHROOT_PATH}/usr/lib/riscv64-linux-gnu/libk5crypto.so.3 ./usr/lib/riscv64-linux-gnu
+	cp -p ${CHROOT_PATH}/lib/riscv64-linux-gnu/libkeyutils.so.1 ./lib/riscv64-linux-gnu
+	cp -p ${CHROOT_PATH}/usr/lib/riscv64-linux-gnu/libkrb5.so.3 ./usr/lib/riscv64-linux-gnu
+	cp -p ${CHROOT_PATH}/usr/lib/riscv64-linux-gnu/libkrb5support.so.0 ./usr/lib/riscv64-linux-gnu
+	cp -p ${CHROOT_PATH}/lib/riscv64-linux-gnu/libmount.so.1 ./lib/riscv64-linux-gnu
+	cp -p ${CHROOT_PATH}/lib/riscv64-linux-gnu/libnsl.so.1 ./lib/riscv64-linux-gnu
+	cp -p ${CHROOT_PATH}/lib/riscv64-linux-gnu/libpcre.so.3 ./lib/riscv64-linux-gnu
+	cp -p ${CHROOT_PATH}/usr/lib/riscv64-linux-gnu/libpcre2-8.so.0 ./usr/lib/riscv64-linux-gnu
+	cp -p ${CHROOT_PATH}/lib/riscv64-linux-gnu/libpthread.so.0 ./lib/riscv64-linux-gnu
+	cp -p ${CHROOT_PATH}/lib/riscv64-linux-gnu/libresolv.so.2 ./lib/riscv64-linux-gnu
+	cp -p ${CHROOT_PATH}/lib/riscv64-linux-gnu/librt.so.1 ./lib/riscv64-linux-gnu
+	cp -p ${CHROOT_PATH}/lib/riscv64-linux-gnu/libselinux.so.1 ./lib/riscv64-linux-gnu
+	cp -p ${CHROOT_PATH}/lib/riscv64-linux-gnu/libtirpc.so.3 ./lib/riscv64-linux-gnu
+	cp -p ${CHROOT_PATH}/lib/riscv64-linux-gnu/libuuid.so.1 ./lib/riscv64-linux-gnu
+	cp -p ${CHROOT_PATH}/lib/riscv64-linux-gnu/libudev.so.1 ./lib/riscv64-linux-gnu
+	cp -p ${CHROOT_PATH}/lib/riscv64-linux-gnu/libext2fs.so.2 ./lib/riscv64-linux-gnu
+	cp -p ${CHROOT_PATH}/lib/riscv64-linux-gnu/libe2p.so.2 ./lib/riscv64-linux-gnu
+	cp -p ${CHROOT_PATH}/usr/lib/riscv64-linux-gnu/libgnutls.so.30 ./lib/riscv64-linux-gnu
+	cp -p ${CHROOT_PATH}/lib/riscv64-linux-gnu/libnl-genl-3.so.200  ./lib/riscv64-linux-gnu
+	cp -p ${CHROOT_PATH}/lib/riscv64-linux-gnu/libnl-3.so.200  ./lib/riscv64-linux-gnu
+	cp -p ${CHROOT_PATH}/lib/riscv64-linux-gnu/libc.so.6  ./lib/riscv64-linux-gnu
+	cp -p ${CHROOT_PATH}/usr/lib/riscv64-linux-gnu/libp11-kit.so.0  ./usr/lib/riscv64-linux-gnu
+	cp -p ${CHROOT_PATH}/usr/lib/riscv64-linux-gnu/libidn2.so.0  ./usr/lib/riscv64-linux-gnu
+	cp -p ${CHROOT_PATH}/usr/lib/riscv64-linux-gnu/libunistring.so.2  ./usr/lib/riscv64-linux-gnu
+	cp -p ${CHROOT_PATH}/usr/lib/riscv64-linux-gnu/libtasn1.so.6  ./usr/lib/riscv64-linux-gnu
+	cp -p ${CHROOT_PATH}/usr/lib/riscv64-linux-gnu/libnettle.so.7  ./usr/lib/riscv64-linux-gnu
+	cp -p ${CHROOT_PATH}/usr/lib/riscv64-linux-gnu/libhogweed.so.5  ./usr/lib/riscv64-linux-gnu
+	cp -p ${CHROOT_PATH}/usr/lib/riscv64-linux-gnu/libgmp.so.10  ./usr/lib/riscv64-linux-gnu
+	cp -p ${CHROOT_PATH}/lib/riscv64-linux-gnu/libpthread.so.0  ./lib/riscv64-linux-gnu
+	cp -p ${CHROOT_PATH}/usr/lib/riscv64-linux-gnu/libffi.so.6  ./usr/lib/riscv64-linux-gnu
+	cp -p ${CHROOT_PATH}/lib/riscv64-linux-gnu/libdl.so.2  ./lib/riscv64-linux-gnu
+
+	cp work/busyboxinit.sh init
+	chmod +x init
+
+../linux-5.1.3-lowrisc/initramfs.cpio: init
+	echo "mknod dev/null c 1 3; mknod dev/tty c 5 0; mknod dev/zero c 1 5; mknod dev/console c 5 1; mknod dev/random c 1 8; mknod dev/urandom c 1 9; mknod dev/gpio0 c 200 0; find . -path ./work -prune -o -path ./.git -prune -o -print | cpio -H newc -o > $@" | fakeroot
 
 deps:
 	@find . -path ./work -prune -o -path ./.git -prune -o -print|xargs file|grep RISC-V|cut -d: -f1|xargs riscv64-unknown-elf-readelf -d |grep NEEDED|cut -d: -f2|sort -u
