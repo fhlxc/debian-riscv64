@@ -239,7 +239,8 @@ packages: base-chroot
             xfonts-100dpi xfonts-75dpi xfonts-100dpi-transcoded xfonts-75dpi-transcoded \
             xfonts-base xfonts-scalable xfonts-terminus xfonts-terminus-oblique \
             xserver-xorg xserver-xorg-core xserver-xorg-input-kbd xserver-xorg-input-mouse \
-            xserver-xorg-legacy xserver-xorg-video-fbdev xterm xfishtank
+            xserver-xorg-legacy xserver-xorg-video-fbdev xterm xfishtank \
+            libx11-dev libx11-dev libxt-dev libxext-dev make gcc git
             
 image:../lowrisc-quickstart/rootfs.tar.xz
 
@@ -256,9 +257,11 @@ image:../lowrisc-quickstart/rootfs.tar.xz
 #Remove the dummy start-stop-daemon
 #sudo chroot work/debian-riscv64-chroot mv /sbin/start-stop-daemon{.REAL,}
 #Disable apt daily tasks
-	sudo chroot work/debian-riscv64-chroot systemctl disable man-db.service
-	sudo chroot work/debian-riscv64-chroot systemctl disable apt-daily.service
-	sudo chroot work/debian-riscv64-chroot systemctl disable apt-daily-upgrade.service
+	sudo chroot work/debian-riscv64-chroot systemctl mask man-db.service
+	sudo chroot work/debian-riscv64-chroot systemctl mask e2scrub_reap.service
+	sudo chroot work/debian-riscv64-chroot systemctl mask apt-daily.service
+	sudo chroot work/debian-riscv64-chroot systemctl mask apt-daily-upgrade.service
+	sudo chroot work/debian-riscv64-chroot systemctl mask systemd-modules-load.service
 	sudo chroot work/debian-riscv64-chroot apt clean
 #make some X defaults
 	sudo cp work/xinitrc work/debian-riscv64-chroot/etc/X11/xinit/xinitrc
