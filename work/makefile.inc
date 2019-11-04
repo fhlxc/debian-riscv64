@@ -1,6 +1,6 @@
 export CHROOT_PATH=work/debian-riscv64-chroot
 
-cpio: ../linux-5.1.3-lowrisc/initramfs.cpio
+cpio: ../$(LINUX)/initramfs.cpio
 
 clean-chroot:
 	#First get rid of the previous chroot
@@ -332,7 +332,7 @@ init: base-chroot work/busyboxinit.sh
 	cp work/busyboxinit.sh init
 	chmod +x init
 
-../linux-5.1.3-lowrisc/initramfs.cpio: init
+../$(LINUX)/initramfs.cpio: init
 	echo "mknod dev/null c 1 3; mknod dev/tty c 5 0; mknod dev/zero c 1 5; mknod dev/console c 5 1; mknod dev/random c 1 8; mknod dev/urandom c 1 9; mknod dev/gpio0 c 200 0; find . -path ./work -prune -o -path ./.git -prune -o -print | cpio -H newc -o > $@" | fakeroot
 
 deps:
