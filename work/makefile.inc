@@ -6,11 +6,13 @@ clean-chroot:
 	#First get rid of the previous chroot
 	sudo rm -rf work/debian-riscv64-chroot
 
-work/debian-riscv64-chroot/usr/bin/qemu-riscv64-static: ../qemu/build-user/riscv64-linux-user/qemu-riscv64
+qemu: work/debian-riscv64-chroot/usr/bin/qemu-riscv64-static
+
+work/debian-riscv64-chroot/usr/bin/qemu-riscv64-static: work/qemu-build-user/riscv64-linux-user/qemu-riscv64
 	#Make a directory to hold the riscv emulator
 	sudo mkdir -p work/debian-riscv64-chroot/usr/bin
 	#Copy the emulator
-	sudo cp ../qemu/build-user/riscv64-linux-user/qemu-riscv64 $@
+	sudo cp work/qemu-build-user/riscv64-linux-user/qemu-riscv64 $@
 
 
 base-chroot: /usr/sbin/debootstrap /usr/share/keyrings/debian-ports-archive-keyring.gpg work/debian-riscv64-chroot/usr/bin/qemu-riscv64-static work/debian-riscv64-chroot/usr/bin/apt
@@ -34,13 +36,13 @@ work/debian-riscv64-chroot/usr/bin/apt:
 	sudo chroot work/debian-riscv64-chroot apt-key adv --recv-keys --keyserver keyserver.ubuntu.com DA1B2CEA81DCBC61
 	sudo chroot work/debian-riscv64-chroot apt update
 
-../qemu/build-user/riscv64-linux-user/qemu-riscv64:
-	(mkdir -p ../qemu/build-user; cd ../qemu/build-user; ../configure --static --disable-system --target-list=riscv64-linux-user)
-	make -C ../qemu/build-user -j 4
+work/qemu-build-user/riscv64-linux-user/qemu-riscv64:
+	(mkdir -p work/qemu-build-user; cd work/qemu-build-user; ../../../riscv-gnu-toolchain/qemu/configure --static --disable-system --target-list=riscv64-linux-user)
+	make -C work/qemu-build-user -j 4
 
-../qemu/build-system/riscv64-softmmu/qemu-system-riscv64:
-	(mkdir -p ../qemu/build-system; cd ../qemu/build-system; ../configure --target-list=riscv64-softmmu)
-	make -C ../qemu/build-system -j 4
+work/qemu/build-system/riscv64-softmmu/qemu-system-riscv64:
+	(mkdir -p work/qemu-build-system; cd work/qemu-build-system; ../../../riscv-gnu-toolchain/qemu/configure --target-list=riscv64-softmmu)
+	make -C work/qemu-build-system -j 4
 
 #Install the development environment
 development: base-chroot
