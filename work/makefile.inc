@@ -26,7 +26,7 @@ base-chroot: /usr/sbin/debootstrap /usr/share/keyrings/debian-ports-archive-keyr
 #Perform the first stage bootstrap
 work/debian-riscv64-chroot/usr/bin/apt:
 	sudo debootstrap --arch=riscv64 --variant=minbase --keyring=/etc/apt/trusted.gpg \
-	      --include=gnupg --exclude=cgmanager sid work/debian-riscv64-chroot \
+	      --include=gnupg,busybox,nfs-common,dosfstools,bluez,bluetooth,nbd-client,aoetools --exclude=cgmanager sid work/debian-riscv64-chroot \
 	      http://deb.debian.org/debian-ports || exit 1
 #Update sources.list
 	sudo cp work/sources.list work/debian-riscv64-chroot/etc/apt
@@ -291,6 +291,9 @@ init: base-chroot work/busyboxinit.sh
 	cp -p ${CHROOT_PATH}/sbin/aoe-discover ./sbin
 	cp -p ${CHROOT_PATH}/sbin/aoe-stat ./sbin
 	cp -p ${CHROOT_PATH}/bin/busybox ./bin
+	cp -p ${CHROOT_PATH}/bin/hciconfig ./bin
+	cp -p ${CHROOT_PATH}/usr/bin/hcitool ./usr/bin
+	cp -p ${CHROOT_PATH}/usr/bin/hciattach ./usr/bin
 	cp -p ${CHROOT_PATH}/lib/ld-linux-riscv64-lp64d.so.1 ./lib
 	cp -p ${CHROOT_PATH}/lib/riscv64-linux-gnu/libblkid.so.1 ./lib/riscv64-linux-gnu
 	cp -p ${CHROOT_PATH}/lib/riscv64-linux-gnu/libcom_err.so.2 ./lib/riscv64-linux-gnu
